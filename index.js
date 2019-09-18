@@ -9,6 +9,7 @@ const axios = require('axios');
 
 let jobsJson; //UUSI - muuttuja, johon tallennetaan kyselyn palauttamat työpaikat
 let index = 0; //UUSI - muuttuja, jonka avulla käyttäjälle voidaan syöttää seuraava työpaikkakortti
+let skills; //Tallennetaan skillsit talteen
 
 process.env.DEBUG = 'dialogflow:debug'; // enables lib debugging statements
 
@@ -32,10 +33,10 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
         return axios.get('https://api.microcompetencies.com/microcompetencies?action=text_to_skills&token=w1q5j4e0q2n0l9w799p81842w69552npz&text=' + text)
             .then((result) => {
                 console.log('RESULT.DATA',result.data);	// tulostaa Firebase konsoliin kutsun palauttaman datan (tämä vain tsekkauksen vuoksi)
-                const dataArray = result.data.data; // result.data.data poimii siinä olevan sanalistan
+                skills = result.data.data; // result.data.data poimii siinä olevan sanalistan
                 var resultText = ""; // palautettava sanalista tallennetaan tähän muuttujaan tekstipätkäksi seuraavassa for-silmukassa
-                for(var i = 0; i < dataArray.length; i++) {
-                    resultText += dataArray[i] + " ";
+                for(var i = 0; i < skills.length; i++) {
+                    resultText += skills[i] + " ";
                 }
                 agent.add(resultText); // tekstipätkä annetaan agentille
             });
@@ -43,20 +44,23 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
 
     function jobsByKeywordsHandler(agent) { //UUSI
         index = 0; // näytetään ensimmäinen kortti
-        const skill = encodeURI(agent.parameters.skill);
-        return axios.get('https://api.microcompetencies.com/microcompetencies?action=request_jobs_by_keywords&token=w1q5j4e0q2n0l9w799p81842w69552npz&words=' + skill + '&area=helsinki&time_range_start=2019-01')
-            .then((result) => {
-                console.log('RESULT.DATA', result.data);
-                jobsJson = result.data.results; // kyselyn palauttamat työpaikat
-                agent.add(new Card({
-                        title: jobsJson[index].id,
-                        text: jobsJson[index].description,
-                        buttonText: 'Työpaikkailmoitus',
-                        buttonUrl: jobsJson[index].url
-                    })
-                );
-                agent.add(new Suggestion('Seuraava työpaikka')); // syötetään agentille 'Seuraava työpaikka' (sama kuin nextJob-intentin opetusteksti)
-            });
+        //const skill = encodeURI(agent.parameters.skill);
+
+        for (let skill in skills) {
+            return axios.get('https://api.microcompetencies.com/microcompetencies?action=request_jobs_by_keywords&token=w1q5j4e0q2n0l9w799p81842w69552npz&words=' + encodeURI(skill) + '&area=helsinki&time_range_start=2019-01')
+                .then((result) => {
+                    console.log('RESULT.DATA', result.data);
+                    jobsJson = result.data.results; // kyselyn palauttamat työpaikat
+                    agent.add(new Card({
+                            title: jobsJson[index].id,
+                            text: jobsJson[index].description,
+                            buttonText: 'Työpaikkailmoitus',
+                            buttonUrl: jobsJson[index].url
+                        })
+                    );
+                    agent.add(new Suggestion('Seuraava työpaikka')); // syötetään agentille 'Seuraava työpaikka' (sama kuin nextJob-intentin opetusteksti)
+                });
+        }
     }
 
     function nextJobHandler(agent) { //UUSI -- tämä syöttää uuden kortin
