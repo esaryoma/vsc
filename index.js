@@ -61,13 +61,17 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
     }
 
     function printOccupationHandler(agent) {
-        return getCompetencies("").then((result) => {
+        var skillsString = ""; // palautettava sanalista tallennetaan tähän muuttujaan tekstipätkäksi seuraavassa for-silmukassa
+        for(var i = 0; i < skills.length-1; i++) {
+            skillsString += skills[i] + ", ";
+        }
+        skillsString+= skills[skills.length-1];
+
+        return getCompetencies(skillsString).then((result) => {
             console.log('RESULT.DATA',result.data);
-            var comps = result.data.data;
-            console.log("Psykologin TIEDOT: " +  comps);
-            console.log("Psykologin TIEDOT: " +  comps[0]);
-            var ammatti = comps[0];
-            agent.add("Don't worry. You can be " + ammatti + ".");
+            var ammatit = result.data.data;
+            console.log("Konsoliin ammattilista: " +  ammatit);
+            agent.add("With your skills, you could be any one of the following:  " + ammatti + ".");
 
         }).catch(function (error) {
             console.log('Tämä on virhe!');
@@ -83,10 +87,10 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
                 var resultText = ""; // palautettava sanalista tallennetaan tähän muuttujaan tekstipätkäksi seuraavassa for-silmukassa
                 for(var i = 0; i < dataArray.length; i++) {
                     resultText += dataArray[i] + ", ";
-                    skills.add(dataArray[i]);
+                    skills.push(dataArray[i]);
                 }
                 agent.add(`Seuraavat taidot (sanavartalot) tunnistettiin tekstistä: ` + resultText + `
-				Would you like to see some jobs related to your skills?`); // tekstipätkä annetaan agentille
+				Would you like to see OCCUPATIONS or EDUCATION? `); // tekstipätkä annetaan agentille
                 //agent.add('Would you like to see some jobs related to your skills?');
             });
     }
@@ -151,8 +155,8 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
 
     intentMap.set('jobsByKeywords', jobsByKeywordsHandler);
     intentMap.set('nextJob', nextJobHandler);
-    intentMap.set('printEducation', printEducationHandler);
-    intentMap.set('printOccupation', printOccupationHandler);
+    intentMap.set('PrintEducation', printEducationHandler);
+    intentMap.set('PrintOccupation', printOccupationHandler);
 
     // intentMap.set('your intent name here', yourFunctionHandler);
     // intentMap.set('your intent name here', googleAssistantHandler);
