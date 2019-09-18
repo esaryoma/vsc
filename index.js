@@ -39,8 +39,8 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
             var comps = result.data.data;
             console.log("Psykologin TIEDOT: " +  comps);
             console.log("Psykologin TIEDOT: " +  comps[0]);
-            var taito = comps[0];
-            agent.add("Don't worry. You can be " + taito + ".");
+            var ammatti = comps[0];
+            agent.add("Don't worry. You can be " + ammatti + ".");
 
             // tulostaa Firebase konsoliin kutsun palauttaman datan (tämä vain tsekkauksen vuoksi)
             // result.data.data poimii siinä olevan sanalistan
@@ -56,6 +56,23 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
 
     }
 
+    function printEducationHandler(agent) {
+
+    }
+
+    function printOccupationHandler(agent) {
+        return getCompetencies("").then((result) => {
+            console.log('RESULT.DATA',result.data);
+            var comps = result.data.data;
+            console.log("Psykologin TIEDOT: " +  comps);
+            console.log("Psykologin TIEDOT: " +  comps[0]);
+            var ammatti = comps[0];
+            agent.add("Don't worry. You can be " + ammatti + ".");
+
+        }).catch(function (error) {
+            console.log('Tämä on virhe!');
+        });
+    }
 
     function textToSkillsHandler(agent) {
         const text = encodeURI(agent.parameters.text); // tunnistaa edellä asetetun text-parametrin
@@ -135,6 +152,8 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
 
     intentMap.set('jobsByKeywords', jobsByKeywordsHandler);
     intentMap.set('nextJob', nextJobHandler);
+    intentMap.set('printEducation', printEducationHandler);
+    intentMap.set('printOccupation', printOccupationHandler);
 
     // intentMap.set('your intent name here', yourFunctionHandler);
     // intentMap.set('your intent name here', googleAssistantHandler);
