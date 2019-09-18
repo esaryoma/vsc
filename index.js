@@ -9,7 +9,7 @@ const axios = require('axios');
 
 let jobsJson; //UUSI - muuttuja, johon tallennetaan kyselyn palauttamat työpaikat
 let index = 0; //UUSI - muuttuja, jonka avulla käyttäjälle voidaan syöttää seuraava työpaikkakortti
-let skills;
+let skills = [];
 
 process.env.DEBUG = 'dialogflow:debug'; // enables lib debugging statements
 
@@ -59,7 +59,6 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
 
     function textToSkillsHandler(agent) {
         const text = encodeURI(agent.parameters.text); // tunnistaa edellä asetetun text-parametrin
-        //agent.add(`Seuraavat taidot (sanavartalot) tunnistettiin tekstistä: `);  // voi poistaa, jos haluaa tulokseksi pelkän vastauksen ilman alkutekstiä
         return axios.get('https://api.microcompetencies.com/microcompetencies?action=text_to_skills&token=w1q5j4e0q2n0l9w799p81842w69552npz&text=' + text)
             .then((result) => {
                 console.log('RESULT.DATA',result.data);	// tulostaa Firebase konsoliin kutsun palauttaman datan (tämä vain tsekkauksen vuoksi)
@@ -67,8 +66,8 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
                 var resultText = ""; // palautettava sanalista tallennetaan tähän muuttujaan tekstipätkäksi seuraavassa for-silmukassa
                 for(var i = 0; i < dataArray.length; i++) {
                     resultText += dataArray[i] + ", ";
+                    skills.add(dataArray[i]);
                 }
-                skills = resultText;
                 agent.add(`Seuraavat taidot (sanavartalot) tunnistettiin tekstistä: ` + resultText + `
 				Would you like to see some jobs related to your skills?`); // tekstipätkä annetaan agentille
                 //agent.add('Would you like to see some jobs related to your skills?');
@@ -79,9 +78,9 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
     function jobsByKeywordsHandler(agent) { //UUSI
         index = 0; // näytetään ensimmäinen kortti
         //agent.context.get('textToSkills').params['chocolate-type']
-        const encodedSkills = encodeURI(skills);
+
         agent.add(`Do you like any of these jobs? `);
-        return axios.get('https://api.microcompetencies.com/microcompetencies?action=request_jobs_by_keywords&token=w1q5j4e0q2n0l9w799p81842w69552npz&words=' + skills + '&area=helsinki&time_range_start=2019-01')
+        return axios.get('https://api.microcompetencies.com/microcompetencies?action=request_jobs_by_keywords&token=w1q5j4e0q2n0l9w799p81842w69552npz&words=' + skills[1] + '&area=helsinki&time_range_start=2019-01')
             .then((result) => {
                 console.log('RESULT.DATA', result.data);
                 jobsJson = result.data.results; // kyselyn palauttamat työpaikat
