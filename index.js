@@ -18,12 +18,41 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
     console.log('Dialogflow Request body: ' + JSON.stringify(request.body));
 
     function welcome(agent) {
-        agent.add(`Welcome to my agent!`);
+        //agent.add(`Welcome to my agent!`);
+        agent.add(`No morjenttes`)
     }
 
     function fallback(agent) {
         agent.add(`I didn't understand`);
         agent.add(`I'm sorry, can you try again?`);
+    }
+
+    function getCompetencies(skills) {
+        var url = 'https://api.microcompetencies.com/microcompetencies?action=skills_to_occupations&skills='+ skills +'&lang=fi&token=w1q5j4e0q2n0l9w799p81842w69552npz';
+        return axios.get(url);
+    }
+
+    function psycologyHandler(agent) {
+        var competencies = getCompetencies("").then((result) => {
+            console.log('RESULT.DATA',result.data);
+            var comps = result.data.data;
+            console.log("Psykologin TIEDOT: " +  comps);
+            console.log("Psykologin TIEDOT: " +  comps[0]);
+            var taito = comps[0];
+            //agent.add("Don't worry. You can be " + taito + ".");
+            agent.add(`Jospa toimisi?`);
+            // tulostaa Firebase konsoliin kutsun palauttaman datan (tämä vain tsekkauksen vuoksi)
+            // result.data.data poimii siinä olevan sanalistan
+            /*var resultText = ""; // palautettava sanalista tallennetaan tähän muuttujaan tekstipätkäksi seuraavassa for-silmukassa
+            for(var i = 0; i < dataArray.length; i++) {
+                resultText += dataArray[i] + " ";
+            }
+            competencies = resultText;*/
+        }).catch(function (error) {
+            console.log('Tämä on virhe!');
+        });
+
+
     }
 
     function textToSkillsHandler(agent) {
@@ -89,25 +118,15 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
     //   agent.setContext({ name: 'weather', lifespan: 2, parameters: { city: 'Rome' }});
     // }
 
-    // // Uncomment and edit to make your own Google Assistant intent handler
-    // // uncomment `intentMap.set('your intent name here', googleAssistantHandler);`
-    // // below to get this function to be run when a Dialogflow intent is matched
-    // function googleAssistantHandler(agent) {
-    //   let conv = agent.conv(); // Get Actions on Google library conv instance
-    //   conv.ask('Hello from the Actions on Google client library!') // Use Actions on Google library
-    //   agent.add(conv); // Add Actions on Google library responses to your agent's response
-    // }
-    // // See https://github.com/dialogflow/dialogflow-fulfillment-nodejs/tree/master/samples/actions-on-google
-    // // for a complete Dialogflow fulfillment library Actions on Google client library v2 integration sample
-
     // Run the proper function handler based on the matched Dialogflow intent name
     let intentMap = new Map();
     intentMap.set('Default Welcome Intent', welcome);
     intentMap.set('Default Fallback Intent', fallback);
     intentMap.set('textToSkills', textToSkillsHandler);
+    intentMap.set('Psycology', psycologyHandler);
 
-    intentMap.set('jobsByKeywords', jobsByKeywordsHandler); //UUSI
-    intentMap.set('nextJob', nextJobHandler); //UUSI
+    intentMap.set('jobsByKeywords', jobsByKeywordsHandler);
+    intentMap.set('nextJob', nextJobHandler);
 
     // intentMap.set('your intent name here', yourFunctionHandler);
     // intentMap.set('your intent name here', googleAssistantHandler);
